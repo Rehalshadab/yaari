@@ -118,11 +118,14 @@ export default function CallPage() {
     try {
       recordedChunks = [];
       const combined = new MediaStream([
-        ...(localStream?.getAudioTracks() || []), ...stream.getAudioTracks(),
+        ...(localStream?.getAudioTracks() || []), ...(localStream?.getVideoTracks() || []),
+        ...stream.getAudioTracks(), ...stream.getVideoTracks(),
       ]);
-      mediaRecorder = new MediaRecorder(combined, {
-        mimeType: MediaRecorder.isTypeSupported("video/webm;codecs=opus") ? "video/webm;codecs=opus" : "video/webm",
-      });
+      const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") ? "video/webm;codecs=vp9,opus"
+        : MediaRecorder.isTypeSupported("video/webm;codecs=vp8,opus") ? "video/webm;codecs=vp8,opus"
+        : MediaRecorder.isTypeSupported("video/webm;codecs=opus") ? "video/webm;codecs=opus"
+        : "video/webm";
+      mediaRecorder = new MediaRecorder(combined, { mimeType: mime });
       mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
       mediaRecorder.start(1000);
       setIsRecording(true);
@@ -176,11 +179,6 @@ export default function CallPage() {
           </div>
         )}
 
-        {isRecording && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-500/80 text-white text-xs px-3 py-1.5 rounded-full">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" /> REC
-          </div>
-        )}
 
         {call.type === "audio" && (
           <div className="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-4xl animate-ring-pulse shadow-lg shadow-purple-500/50">

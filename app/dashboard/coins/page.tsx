@@ -14,7 +14,7 @@ const PACKAGES = [
   { coins: 2000, price: 999 },
 ];
 
-const ADMIN_UPI = "admin@yaari"; // Replace with your actual UPI ID
+const ADMIN_UPI = "rehalon786@oksbi";
 const ADMIN_UPI_QR = ""; // Optional: URL to UPI QR code image
 
 export default function CoinsPage() {
