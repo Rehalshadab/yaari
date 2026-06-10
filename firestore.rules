@@ -68,5 +68,21 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // ─── TRANSACTIONS (coin deposits) ──────────────────────
+    match /transactions/{transactionId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == resource.data.userId
+        || request.auth.token.email == "admin@yaari.com"
+      );
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.type == 'deposit'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.coins is number
+        && request.resource.data.coins > 0;
+      allow update: if request.auth.token.email == "admin@yaari.com";
+      allow delete: if false;
+    }
   }
 }

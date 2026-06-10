@@ -35,8 +35,8 @@ export default function CoinsPage() {
     setLoading(true);
     try {
       // Admin will verify transaction and approve manually
-      await addCoins(userData.uid, selectedPkg.coins);
-      toast.success(`${selectedPkg.coins} coins added!`);
+      await addCoins(userData.uid, selectedPkg.coins, txnId.trim());
+      toast.success("Payment request submitted! Coins will be added after admin verifies.");
       setShowPayment(false);
       setSelectedPkg(null);
     } catch {

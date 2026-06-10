@@ -58,7 +58,7 @@ export function CallProvider({ children }: { children: ReactNode }) {
   const handleAccept = useCallback(async () => {
     if (!incomingCall) return;
     await acceptCall(incomingCall.id);
-    router.push(`/call/${incomingCall.id}`);
+    router.push(`/callui/${incomingCall.id}`);
     setIncomingCall(null);
   }, [incomingCall, router]);
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getAllUsers, getAllCalls, getAllWithdrawals, approveWithdrawal } from "@/lib/firestore";
+import { getAllUsers, getAllCalls, getAllWithdrawals, getAllTransactions, approveWithdrawal, approveTransaction } from "@/lib/firestore";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -13,7 +13,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
-  const [tab, setTab] = useState<"users" | "calls" | "withdrawals">("users");
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [tab, setTab] = useState<"users" | "calls" | "withdrawals" | "transactions">("users");
 
   useEffect(() => {
     if (!loading && (!user || user?.email !== "admin@yaari.com")) router.push("/");
@@ -23,12 +24,19 @@ export default function AdminPage() {
     getAllUsers().then(setUsers);
     getAllCalls().then(setCalls);
     getAllWithdrawals().then(setWithdrawals);
+    getAllTransactions().then(setTransactions);
   }, []);
 
-  const handleApprove = async (id: string) => {
+  const handleApproveWithdrawal = async (id: string) => {
     await approveWithdrawal(id);
     setWithdrawals((prev) => prev.map((w) => w.id === id ? { ...w, status: "completed" } : w));
     toast.success("Withdrawal approved");
+  };
+
+  const handleApproveTransaction = async (tx: any) => {
+    await approveTransaction(tx.id, tx.userId, tx.coins);
+    setTransactions((prev) => prev.map((t) => t.id === tx.id ? { ...t, status: "completed" } : t));
+    toast.success(`${tx.coins} coins added to ${getUserName(tx.userId)}`);
   };
 
   if (loading || !user) return null;
@@ -47,6 +55,7 @@ export default function AdminPage() {
         <div className="flex gap-4 mb-6 flex-wrap">
           <button onClick={() => setTab("users")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "users" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Users ({users.length})</button>
           <button onClick={() => setTab("calls")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "calls" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Calls ({calls.length})</button>
+          <button onClick={() => setTab("transactions")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "transactions" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Deposits ({transactions.length})</button>
           <button onClick={() => setTab("withdrawals")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "withdrawals" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Withdrawals ({withdrawals.length})</button>
         </div>
 
@@ -136,6 +145,51 @@ export default function AdminPage() {
           </div>
         )}
 
+        {tab === "transactions" && (
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-purple-300/60 text-left">
+                    <th className="p-4">User</th>
+                    <th className="p-4">Coins</th>
+                    <th className="p-4">UTR / Ref ID</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.map((tx) => (
+                    <tr key={tx.id} className="border-b border-white/5 text-white hover:bg-white/5 transition">
+                      <td className="p-4 font-medium">{getUserName(tx.userId)}</td>
+                      <td className="p-4 text-yellow-400 font-semibold">{tx.coins}</td>
+                      <td className="p-4 text-xs text-purple-300/70 font-mono">{tx.upiTxnId || "—"}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${tx.status === "completed" ? "bg-green-500/20 text-green-300" : "bg-yellow-500/20 text-yellow-300"}`}>{tx.status}</span>
+                      </td>
+                      <td className="p-4 text-xs text-purple-300/60">{new Date(tx.createdAt).toLocaleDateString()}</td>
+                      <td className="p-4">
+                        {tx.status !== "completed" ? (
+                          <button onClick={() => handleApproveTransaction(tx)}
+                            className="px-4 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-xs font-medium hover:bg-green-500/30 transition">
+                            Verify & Add Coins
+                          </button>
+                        ) : (
+                          <span className="text-xs text-purple-300/40">✓ Added</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {transactions.length === 0 && (
+                    <tr><td colSpan={6} className="p-8 text-center text-purple-300/40">No deposit requests</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {tab === "withdrawals" && (
           <div className="glass rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
@@ -162,7 +216,7 @@ export default function AdminPage() {
                       <td className="p-4 text-xs text-purple-300/60">{new Date(w.createdAt).toLocaleDateString()}</td>
                       <td className="p-4">
                         {w.status !== "completed" ? (
-                          <button onClick={() => handleApprove(w.id)}
+                          <button onClick={() => handleApproveWithdrawal(w.id)}
                             className="px-4 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-xs font-medium hover:bg-green-500/30 transition">
                             Mark Paid
                           </button>

@@ -23,7 +23,7 @@ export const createUserProfile = async (
     uid, displayName: data.displayName, email: data.email, phone: data.phone,
     gender: data.gender, photoURL: data.photoURL || "", bio: "",
     createdAt: Date.now(), coins: 0, earnings: 0, totalEarned: 0,
-    totalMinutes: 0, callCount: 0, isActive: false,
+    totalMinutes: 0, callCount: 0, isActive: true,
     activeModes: { audio: false, video: false }, online: false,
   };
   if (data.gender === "female") {
@@ -130,11 +130,20 @@ export const endCall = async (callId: string) => {
   });
 };
 
-export const addCoins = async (uid: string, coinAmount: number) => {
-  await updateDoc(doc(db, "users", uid), { coins: increment(coinAmount) });
+export const addCoins = async (uid: string, coinAmount: number, upiTxnId: string) => {
   await addDoc(collection(db, "transactions"), {
-    userId: uid, type: "deposit", coins: coinAmount, status: "completed", createdAt: Date.now(),
+    userId: uid, type: "deposit", coins: coinAmount, upiTxnId, status: "pending", createdAt: Date.now(),
   });
+};
+
+export const approveTransaction = async (txnId: string, uid: string, coinAmount: number) => {
+  await updateDoc(doc(db, "users", uid), { coins: increment(coinAmount) });
+  await updateDoc(doc(db, "transactions", txnId), { status: "completed" });
+};
+
+export const getAllTransactions = async () => {
+  const snap = await getDocs(query(collection(db, "transactions"), orderBy("createdAt", "desc")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const requestWithdrawal = async (uid: string, amount: number, upiId: string) => {
