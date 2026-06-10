@@ -26,7 +26,7 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         request.auth.uid == resource.data.callerId
         || request.auth.uid == resource.data.receiverId
-        || request.auth.token.email == "admin@yaari.com"
+        || request.auth.token.email == "rehalon786@gmail.com"
       );
 
       allow create: if request.auth != null
@@ -55,7 +55,7 @@ service cloud.firestore {
     match /withdrawals/{withdrawalId} {
       allow read: if request.auth != null && (
         request.auth.uid == resource.data.userId
-        || request.auth.token.email == "admin@yaari.com"
+        || request.auth.token.email == "rehalon786@gmail.com"
       );
 
       allow create: if request.auth != null
@@ -64,7 +64,7 @@ service cloud.firestore {
         && request.resource.data.amount >= 50
         && request.resource.data.status == 'pending';
 
-      allow update: if request.auth.token.email == "admin@yaari.com";
+      allow update: if request.auth.token.email == "rehalon786@gmail.com";
 
       allow delete: if false;
     }
@@ -73,7 +73,7 @@ service cloud.firestore {
     match /transactions/{transactionId} {
       allow read: if request.auth != null && (
         request.auth.uid == resource.data.userId
-        || request.auth.token.email == "admin@yaari.com"
+        || request.auth.token.email == "rehalon786@gmail.com"
       );
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.userId
@@ -81,7 +81,7 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.coins is number
         && request.resource.data.coins > 0;
-      allow update: if request.auth.token.email == "admin@yaari.com";
+      allow update: if request.auth.token.email == "rehalon786@gmail.com";
       allow delete: if false;
     }
   }

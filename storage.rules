@@ -4,7 +4,7 @@ service firebase.storage {
 
     // Call recordings: admin only read, authenticated upload, max 200MB
     match /recordings/{callId} {
-      allow read: if request.auth != null && request.auth.token.email == "admin@yaari.com";
+      allow read: if request.auth != null && request.auth.token.email == "rehalon786@gmail.com";
       allow write: if request.auth != null
         && request.resource.size < 200 * 1024 * 1024;
       allow delete: if false;
