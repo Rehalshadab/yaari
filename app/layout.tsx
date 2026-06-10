@@ -17,9 +17,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Yaari - Connect, Chat & Earn",
-  description: "Connect with people, earn money on calls",
+  title: "Yaari - Connect, Chat & Earn Money | Live Video & Audio Calls",
+  description: "Yaari is a live calling platform where you can connect with new people, make audio and video calls, and earn real money. Join free today!",
   manifest: "/manifest.json",
+  keywords: ["live calling", "earn money", "video call", "audio call", "chat", "make friends", "Yaari"],
+  openGraph: {
+    title: "Yaari - Connect, Chat & Earn",
+    description: "Make friends and earn real money through live audio & video calls.",
+    url: "https://yaari-six.vercel.app",
+    siteName: "Yaari",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Yaari - Connect, Chat & Earn",
+    description: "Make friends and earn real money through live audio & video calls.",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

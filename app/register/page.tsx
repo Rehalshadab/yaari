@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -15,8 +15,15 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState<"male" | "female" | null>(null);
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (ref) setReferralCode(ref);
+  }, []);
 
   const handleGenderSelect = (g: "male" | "female") => {
     setGender(g);
@@ -35,7 +42,7 @@ export default function RegisterPage() {
         email,
         phone,
         gender,
-      });
+      }, referralCode.trim() || undefined);
       toast.success("Account created! Welcome to Yaari.");
       router.push("/dashboard");
     } catch (err: any) {
@@ -119,6 +126,13 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
+              className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+            />
+            <input
+              type="text"
+              placeholder="Referral code (optional)"
+              value={referralCode}
+              onChange={(e) => setReferralCode(e.target.value)}
               className="w-full px-4 py-3.5 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
             />
             <div className="flex gap-3">

@@ -12,6 +12,8 @@ interface UserData {
   totalMinutes: number; callCount: number; isActive: boolean;
   activeModes: { audio: boolean; video: boolean };
   upiId?: string; totalWithdrawn?: number; totalSpent?: number;
+  referralCode?: string; referredBy?: string;
+  referralEarnings?: number; referralCount?: number;
   createdAt: number;
 }
 

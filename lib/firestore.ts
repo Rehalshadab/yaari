@@ -12,24 +12,59 @@ const COST_PER_MINUTE_VIDEO = 15;
 
 export { ADMIN_COMMISSION, COST_PER_MINUTE_AUDIO, COST_PER_MINUTE_VIDEO };
 
+const REFERRAL_BONUS = 10;
+
+export { REFERRAL_BONUS };
+
+export const generateReferralCode = (displayName: string): string => {
+  const name = displayName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 5);
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${name}${rand}`;
+};
+
 export const createUserProfile = async (
   uid: string,
   data: {
     displayName: string; email: string; phone: string;
     gender: "male" | "female"; photoURL?: string;
-  }
+  },
+  referralCode?: string
 ) => {
+  const code = generateReferralCode(data.displayName);
   const base = {
     uid, displayName: data.displayName, email: data.email, phone: data.phone,
     gender: data.gender, photoURL: data.photoURL || "", bio: "",
     createdAt: Date.now(), coins: 0, earnings: 0, totalEarned: 0,
-    totalMinutes: 0, callCount: 0, isActive: true,
+    totalMinutes: 0, callCount: 0, isActive: true, referralCode: code,
+    referredBy: "", referralEarnings: 0, referralCount: 0,
     activeModes: { audio: false, video: false }, online: false,
   };
+
+  if (referralCode) {
+    const q = query(collection(db, "users"), where("referralCode", "==", referralCode), limit(1));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      const referrer = snap.docs[0];
+      base.referredBy = referrer.id;
+    }
+  }
+
   if (data.gender === "female") {
     await setDoc(doc(db, "users", uid), { ...base, upiId: "", totalWithdrawn: 0 });
   } else {
     await setDoc(doc(db, "users", uid), { ...base, totalSpent: 0 });
+  }
+
+  if (base.referredBy) {
+    await updateDoc(doc(db, "users", base.referredBy), {
+      coins: increment(REFERRAL_BONUS),
+      referralEarnings: increment(REFERRAL_BONUS),
+      referralCount: increment(1),
+    });
+    await addDoc(collection(db, "transactions"), {
+      userId: base.referredBy, type: "referral", coins: REFERRAL_BONUS,
+      status: "completed", referredUser: uid, createdAt: Date.now(),
+    });
   }
 };
 

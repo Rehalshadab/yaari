@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { FiHome, FiDollarSign, FiClock, FiUser, FiLogOut, FiShield } from "react-icons/fi";
+import { FiHome, FiDollarSign, FiClock, FiUser, FiLogOut, FiShield, FiGift } from "react-icons/fi";
 import { BiCoin } from "react-icons/bi";
 
 export default function Sidebar() {
@@ -20,6 +20,7 @@ export default function Sidebar() {
       ? [{ href: "/dashboard/earnings", label: "Earnings", icon: FiDollarSign }]
       : [{ href: "/dashboard/coins", label: "Buy Coins", icon: BiCoin }]),
     { href: "/dashboard/history", label: "History", icon: FiClock },
+    { href: "/dashboard/referral", label: "Refer & Earn", icon: FiGift },
     { href: "/dashboard/profile", label: "Profile", icon: FiUser },
   ];
 
