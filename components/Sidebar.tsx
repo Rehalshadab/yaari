@@ -41,7 +41,7 @@ export default function Sidebar() {
             </Link>
           );
         })}
-      {userData.email === "rehalon786@gmail.com" && (
+      {userData?.email?.toLowerCase() === "rehalon786@gmail.com" && (
         <Link href="/admin"
           className={`flex items-center justify-center lg:justify-start gap-3 px-4 lg:px-6 py-3.5 transition text-purple-300/50 hover:text-white hover:bg-white/5 ${
             pathname === "/admin" ? "bg-purple-500/20 border-r-2 border-purple-400 text-white" : ""

@@ -17,7 +17,7 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"users" | "calls" | "withdrawals" | "transactions">("users");
 
   useEffect(() => {
-    if (!loading && (!user || user?.email !== "rehalon786@gmail.com")) router.push("/");
+    if (!loading && (!user || user?.email?.toLowerCase() !== "rehalon786@gmail.com")) router.push("/");
   }, [user, loading, router]);
 
   useEffect(() => {
