@@ -1,18 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // Call recordings: only admin can read
+
+    // Call recordings: admin only read, authenticated upload, max 200MB
     match /recordings/{callId} {
       allow read: if request.auth != null && request.auth.token.email == "admin@yaari.com";
-      allow write: if request.auth != null;
+      allow write: if request.auth != null
+        && request.resource.size < 200 * 1024 * 1024;
       allow delete: if false;
     }
 
-    // Profile pictures: user can write own, anyone can read
+    // Profile avatars: public read, owner upload, max 5MB, image only
     match /avatars/{userId} {
       allow read: if true;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
       allow delete: if false;
+    }
+
+    // Deny everything else
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }
