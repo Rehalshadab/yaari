@@ -190,3 +190,11 @@ export const getAllCalls = async () => {
   const snap = await getDocs(query(collection(db, "calls"), orderBy("createdAt", "desc")));
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
+
+export const getAllWithdrawals = async () => {
+  const snap = await getDocs(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+};
+
+export const approveWithdrawal = async (withdrawalId: string) =>
+  updateDoc(doc(db, "withdrawals", withdrawalId), { status: "completed" });

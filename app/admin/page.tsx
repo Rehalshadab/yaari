@@ -3,15 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { getAllUsers, getAllCalls } from "@/lib/firestore";
+import { getAllUsers, getAllCalls, getAllWithdrawals, approveWithdrawal } from "@/lib/firestore";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 export default function AdminPage() {
   const { user, userData, loading } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [calls, setCalls] = useState<any[]>([]);
-  const [tab, setTab] = useState<"users" | "calls">("users");
+  const [withdrawals, setWithdrawals] = useState<any[]>([]);
+  const [tab, setTab] = useState<"users" | "calls" | "withdrawals">("users");
 
   useEffect(() => {
     if (!loading && (!user || user?.email !== "admin@yaari.com")) router.push("/");
@@ -20,9 +22,19 @@ export default function AdminPage() {
   useEffect(() => {
     getAllUsers().then(setUsers);
     getAllCalls().then(setCalls);
+    getAllWithdrawals().then(setWithdrawals);
   }, []);
 
+  const handleApprove = async (id: string) => {
+    await approveWithdrawal(id);
+    setWithdrawals((prev) => prev.map((w) => w.id === id ? { ...w, status: "completed" } : w));
+    toast.success("Withdrawal approved");
+  };
+
   if (loading || !user) return null;
+
+  const getUserName = (uid: string) => users.find((u) => u.id === uid)?.displayName || uid.slice(0, 8) + "...";
+  const getUserUpi = (uid: string) => users.find((u) => u.id === uid)?.upiId || "—";
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-950 via-purple-900 to-pink-900 p-6">
@@ -32,9 +44,10 @@ export default function AdminPage() {
           <Link href="/dashboard" className="text-sm text-purple-300/60 hover:text-white transition">Back to Dashboard</Link>
         </div>
 
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-4 mb-6 flex-wrap">
           <button onClick={() => setTab("users")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "users" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Users ({users.length})</button>
           <button onClick={() => setTab("calls")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "calls" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Calls ({calls.length})</button>
+          <button onClick={() => setTab("withdrawals")} className={`px-6 py-2 rounded-xl font-medium transition ${tab === "withdrawals" ? "bg-purple-500 text-white" : "bg-white/10 text-purple-300/60 hover:text-white"}`}>Withdrawals ({withdrawals.length})</button>
         </div>
 
         {tab === "users" && (
@@ -46,11 +59,11 @@ export default function AdminPage() {
                     <th className="p-4">Name</th>
                     <th className="p-4">Email</th>
                     <th className="p-4">Phone</th>
+                    <th className="p-4">UPI</th>
                     <th className="p-4">Gender</th>
                     <th className="p-4">Coins</th>
                     <th className="p-4">Earnings</th>
                     <th className="p-4">Calls</th>
-                    <th className="p-4">Active</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -59,15 +72,13 @@ export default function AdminPage() {
                       <td className="p-4 font-medium">{u.displayName || "—"}</td>
                       <td className="p-4 text-purple-300/70">{u.email || "—"}</td>
                       <td className="p-4">{u.phone || "—"}</td>
+                      <td className="p-4 text-xs text-purple-300/70">{u.upiId || "—"}</td>
                       <td className="p-4">
                         <span className={`px-2 py-0.5 rounded-full text-xs ${u.gender === "female" ? "bg-pink-500/20 text-pink-300" : "bg-blue-500/20 text-blue-300"}`}>{u.gender}</span>
                       </td>
                       <td className="p-4">{u.coins ?? 0}</td>
                       <td className="p-4">₹{u.earnings ?? 0}</td>
                       <td className="p-4">{u.callCount ?? 0}</td>
-                      <td className="p-4">
-                        <span className={`w-2 h-2 rounded-full inline-block ${u.isActive ? "bg-green-400" : "bg-gray-500"}`} />
-                      </td>
                     </tr>
                   ))}
                   {users.length === 0 && (
@@ -97,8 +108,8 @@ export default function AdminPage() {
                 <tbody>
                   {calls.map((c) => (
                     <tr key={c.id} className="border-b border-white/5 text-white hover:bg-white/5 transition">
-                      <td className="p-4 font-medium">{c.callerId?.slice(0, 8)}...</td>
-                      <td className="p-4">{c.receiverId?.slice(0, 8)}...</td>
+                      <td className="p-4 font-medium">{getUserName(c.callerId)}</td>
+                      <td className="p-4">{getUserName(c.receiverId)}</td>
                       <td className="p-4">
                         <span className={`px-2 py-0.5 rounded-full text-xs ${c.type === "video" ? "bg-green-500/20 text-green-300" : "bg-purple-500/20 text-purple-300"}`}>{c.type}</span>
                       </td>
@@ -118,6 +129,51 @@ export default function AdminPage() {
                   ))}
                   {calls.length === 0 && (
                     <tr><td colSpan={7} className="p-8 text-center text-purple-300/40">No calls found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {tab === "withdrawals" && (
+          <div className="glass rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10 text-purple-300/60 text-left">
+                    <th className="p-4">User</th>
+                    <th className="p-4">UPI ID</th>
+                    <th className="p-4">Amount</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {withdrawals.map((w) => (
+                    <tr key={w.id} className="border-b border-white/5 text-white hover:bg-white/5 transition">
+                      <td className="p-4 font-medium">{getUserName(w.userId)}</td>
+                      <td className="p-4 text-xs text-purple-300/70">{w.upiId || getUserUpi(w.userId)}</td>
+                      <td className="p-4 text-green-400 font-semibold">₹{w.amount}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${w.status === "completed" ? "bg-green-500/20 text-green-300" : "bg-yellow-500/20 text-yellow-300"}`}>{w.status}</span>
+                      </td>
+                      <td className="p-4 text-xs text-purple-300/60">{new Date(w.createdAt).toLocaleDateString()}</td>
+                      <td className="p-4">
+                        {w.status !== "completed" ? (
+                          <button onClick={() => handleApprove(w.id)}
+                            className="px-4 py-1.5 bg-green-500/20 text-green-300 rounded-lg text-xs font-medium hover:bg-green-500/30 transition">
+                            Mark Paid
+                          </button>
+                        ) : (
+                          <span className="text-xs text-purple-300/40">✓ Paid</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                  {withdrawals.length === 0 && (
+                    <tr><td colSpan={6} className="p-8 text-center text-purple-300/40">No withdrawal requests</td></tr>
                   )}
                 </tbody>
               </table>
